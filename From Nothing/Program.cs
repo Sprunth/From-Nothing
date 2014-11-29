@@ -8,8 +8,13 @@ namespace From_Nothing
 {
     class Program
     {
+        public static FNGame ActiveGame { get; private set; }
+        
         static void Main(string[] args)
         {
+            ActiveGame = new FNGame();
+            ActiveGame.Initialize();
+            ActiveGame.Run();
         }
     }
 }
