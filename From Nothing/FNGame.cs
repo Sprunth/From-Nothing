@@ -34,32 +34,61 @@ namespace From_Nothing
             var param = new IrrlichtCreationParameters(){
                 AntiAliasing = 8,
                 DeviceType = DeviceType.Best,
-                DriverType = DriverType.Direct3D9,
+                DriverType = DriverType.OpenGL,
                 VSync = true,
                 WindowSize = new Dimension2Di(1200, 700)
             };
             device = IrrlichtDevice.CreateDevice(param);
+
+            device.OnEvent += device_OnEvent;
 
             Driver = device.VideoDriver;
             Scene = device.SceneManager;
             Gui = device.GUIEnvironment;
         }
 
+        bool device_OnEvent(Event evnt)
+        {
+            if (evnt.Type == EventType.Key && evnt.Key.Key == KeyCode.Esc)
+            {
+                device.Close();
+                Environment.Exit(0);
+            }
+            return false;
+        }
+
         public void Initialize()
         {
             //var light = Scene.AddLightSceneNode(Scene.RootNode,new Vector3Df(2, 6, 3), new Colorf(200, 200, 180), 20);
-            var light = Scene.AddLightSceneNode(null, new Vector3Df(2, 6, 3));
+            var light = Scene.AddLightSceneNode(null, new Vector3Df(-30, 35, -25));
+            light.Radius = 25;
+            light.CastShadows = true;
+            light.LightType = LightType.Point;
+
+            var sun = Scene.AddLightSceneNode(null, new Vector3Df(40, 100, 40));
+            sun.Radius = 50;
+            sun.CastShadows = true;
+            sun.LightType = LightType.Point;
+            
 
             sphere = Scene.AddAnimatedMeshSceneNode(Scene.AddSphereMesh("sphere", 10f));
             sphere.Scale = new Vector3Df(1);
-            sphere.SetMaterialFlag(MaterialFlag.Lighting, false);
-            sphere.Position = new Vector3Df(1,1,1);
+            sphere.SetMaterialFlag(MaterialFlag.Lighting, true);
+            sphere.Position = new Vector3Df(1,11,1);
             //sphere.SetMaterialTexture(0, Driver.GetTexture("Mars.jpg"));
             sphere.SetMaterialTexture(0, GeneratePlanetTexture(new Vector2Dd(300, 300)));
             Scene.MeshManipulator.SetVertexColors(sphere.Mesh, new Color(200, 200, 200));
-            
 
-            var camera = Scene.AddCameraSceneNode(Scene.RootNode, new Vector3Df(-20, 10, -30));
+            var terrain =
+                Scene.AddAnimatedMeshSceneNode(Scene.AddHillPlaneMesh("terrain", new Dimension2Df(1, 1),
+                    new Dimension2Di(128,128),
+                    new Material(), 0));
+            terrain.Position = new Vector3Df(0,0,0);
+            terrain.SetMaterialFlag(MaterialFlag.Lighting, true);
+            Scene.MeshManipulator.SetVertexColors(terrain.Mesh, new Color(220, 220, 220));
+
+            var camera = Scene.AddCameraSceneNodeFPS(Scene.RootNode, 100f, .2f,-1);
+            camera.Position = new Vector3Df(-20, 20, -30);
             camera.Target = new Vector3Df(0, 0, 0);
         }
 
