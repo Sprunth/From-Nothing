@@ -28,10 +28,19 @@ namespace From_Nothing
         public GUIEnvironment Gui { get; set; }
 
         private AnimatedMeshSceneNode sphere;
-        private CameraSceneNode camera;
+        private Camera _cam;
 
         private TriangleSelector selector;
         private MeshSceneNode selectionCube;
+
+        public delegate void MouseEventHandler(Event evnt);
+        public event MouseEventHandler OnMouseEvent;
+
+        public delegate void KeyEventHandler(Event evnt);
+        public event KeyEventHandler OnKeyEvent;
+
+        public delegate void UpdateHandler();
+        public event UpdateHandler OnUpdate;
 
         public FNGame()
         {
@@ -57,6 +66,9 @@ namespace From_Nothing
             {
                 case EventType.Key:
                 {
+                    if (OnKeyEvent != null)
+                        OnKeyEvent(evnt);
+
                     switch (evnt.Key.Key)
                     {
                         case KeyCode.Esc:
@@ -65,13 +77,13 @@ namespace From_Nothing
                             Environment.Exit(0);
                             break;
                         }
-                        case KeyCode.Space:
-                        {
-                            if (!evnt.Key.PressedDown)
-                                camera.InputReceiverEnabled = !camera.InputReceiverEnabled;
-                            break;
-                        }
                     }
+                    break;
+                }
+                case EventType.Mouse:
+                {
+                    if (OnMouseEvent != null)
+                        OnMouseEvent(evnt);
                     break;
                 }
             }
@@ -111,9 +123,7 @@ namespace From_Nothing
             terrain.TriangleSelector = selector;
             Scene.CreateCollisionResponseAnimator(selector, terrain);
 
-            camera = Scene.AddCameraSceneNodeFPS(Scene.RootNode, 100f, .2f,-1);
-            camera.Position = new Vector3Df(-20, 20, -30);
-            camera.Target = new Vector3Df(0, 0, 0);
+            _cam = new Camera(this);
 
             selectionCube = Scene.AddCubeSceneNode(10, null, -1);
             selectionCube.SetMaterialFlag(MaterialFlag.Wireframe, true);
@@ -124,21 +134,16 @@ namespace From_Nothing
         {
             while (device.Run())
             {
+                if (OnUpdate != null)
+                    OnUpdate();
+
                 sphere.Rotation += new Vector3Df(0, 1, 0);
 
                 device.SetWindowCaption(Driver.FPS.ToString());
 
                 //collision
-                var ray = new Line3Df();
-                ray.Start = camera.Position;
-                ray.End = ray.Start + (camera.Target - ray.Start).Normalize()*1000;
-                Vector3Df intersection;
-                Triangle3Df hitTriangle;
-                var selectedNode = Scene.SceneCollisionManager.GetSceneNodeAndCollisionPointFromRay(ray,
-                    out intersection, out hitTriangle, 1, Scene.RootNode);
-
-                Console.WriteLine(intersection);
-                selectionCube.Position = intersection;
+                
+                selectionCube.Position = _cam.Intersection;
 
 
                 Driver.BeginScene(true, true, new Color(110, 60, 50));
@@ -147,6 +152,8 @@ namespace From_Nothing
                 Gui.DrawAll();
 
                 Driver.EndScene();
+
+                device.Yield();
             }
         }
 

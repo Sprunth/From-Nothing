@@ -12,9 +12,13 @@ namespace From_Nothing
         
         static void Main(string[] args)
         {
+            
             ActiveGame = new FNGame();
             ActiveGame.Initialize();
             ActiveGame.Run();
+
+
         }
+
     }
 }
